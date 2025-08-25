@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stitch Design - Product Space Chat</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Custom Styles for Scrollbar and Typing Indicator -->
+    <style>
+        /* Simple fade-in animation for messages */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Custom scrollbar for a cleaner look */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111418;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #293038;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #3a434d;
+        }
+
+        /* Typing indicator animation */
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #9dabb8;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Logo Animation */
+        .logo-link img {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .logo-link:hover img {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body class="bg-[#111418]">
+    <div class="relative flex size-full min-h-screen flex-col group/design-root overflow-hidden" style='font-family: Inter, "Noto Sans", sans-serif;'>
+        <div class="layout-container flex h-full grow flex-col">
+            <!-- Header -->
+            <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#293038] px-4 sm:px-10 py-3 shrink-0">
+                <div class="flex items-center gap-4 text-white">
+                    <a href="#" class="logo-link">
+                        <img src="images/logo.png" alt="Product Space Logo" class="size-12">
+                    </a>
+                    <h1 class="text-white text-lg font-bold tracking-tight">Product Space</h1>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="flex flex-1 justify-center py-5 overflow-hidden">
+                <div class="layout-content-container flex flex-col max-w-[960px] flex-1 h-full px-4">
+                    
+                    <!-- Welcome Message -->
+                    <div class="text-center mb-4">
+                        <h2 class="text-white tracking-tight text-3xl font-bold leading-tight pb-2 pt-5">Welcome to Product Space</h2>
+                        <p class="text-[#9dabb8] text-base font-normal leading-normal pb-3 pt-1">
+                            Ask me anything you want.
+                        </p>
+                        
+                        <!-- Notion and Docs Logos -->
+                        <div class="flex justify-center items-center gap-8 my-4">
+                            <a href="#" class="cursor-pointer logo-link">
+                                <img src="images/notion.png" alt="Notion Logo" class="w-20 h-20">
+                            </a>
+                            <a href="#" class="cursor-pointer logo-link">
+                                <img src="images/docs.png" alt="Docs Logo" class="w-20 h-20">
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages Container -->
+                    <div id="chat-container" class="flex-1 space-y-6 p-4 overflow-y-auto custom-scrollbar">
+                        <!-- Messages will be dynamically inserted here -->
+                    </div>
+                    
+                    <!-- Typing Indicator Placeholder -->
+                    <div id="typing-indicator-container" class="px-4 py-2"></div>
+
+                    <!-- Message Input Form -->
+                    <div class="mt-auto pt-4">
+                        <form id="chat-form" class="flex items-center gap-3">
+                            <img src="https://placehold.co/40x40/334155/ffffff?text=U" alt="User Avatar" class="rounded-full size-10 shrink-0 hidden sm:block">
+                            <div class="relative flex-1">
+                                <input id="message-input" type="text" placeholder="Type your message..." class="form-input w-full resize-none rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 border-none bg-[#293038] h-12 placeholder:text-[#9dabb8] px-4 pr-24 text-base font-normal leading-normal">
+                                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-[#1980e6] hover:bg-blue-600 transition-colors text-white text-sm font-medium">
+                                    Send
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const chatContainer = document.getElementById('chat-container');
+            const chatForm = document.getElementById('chat-form');
+            const messageInput = document.getElementById('message-input');
+            const typingIndicatorContainer = document.getElementById('typing-indicator-container');
+
+            // Webhook URL - Updated
+            const webhookUrl = 'https://rohancha12.app.n8n.cloud/webhook/837c17f3-4932-49b8-8f16-405d27f77692';
+
+            // Initial chat messages data - Now empty
+            const chatHistory = [];
+            
+            // Bot avatar and user avatar placeholders
+            const botAvatar = 'https://placehold.co/40x40/1E293B/ffffff?text=P';
+            const userAvatar = 'https://placehold.co/40x40/334155/ffffff?text=U';
+
+            // --- Functions ---
+
+            /**
+             * Scrolls the chat container to the bottom.
+             */
+            const scrollToBottom = () => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            };
+
+            /**
+             * Creates the HTML for a single chat message.
+             * @param {object} messageData - The message object { sender, message }.
+             * @returns {string} - The HTML string for the message.
+             */
+            const createMessageHTML = (messageData) => {
+                const isUser = messageData.sender === 'user';
+                const alignment = isUser ? 'justify-end' : 'justify-start';
+                const avatarUrl = isUser ? userAvatar : botAvatar;
+                const name = isUser ? 'You' : 'Product Space';
+                const nameColor = 'text-[#9dabb8]';
+                const bubbleColor = isUser ? 'bg-[#1980e6] text-white' : 'bg-[#293038] text-white';
+                const nameAlignment = isUser ? 'text-right' : 'text-left';
+
+                return `
+                    <div class="flex items-end gap-3 ${alignment} message-fade-in">
+                        ${!isUser ? `<img src="${avatarUrl}" alt="${name} Avatar" class="rounded-full size-10 shrink-0">` : ''}
+                        <div class="flex flex-col gap-1 max-w-md">
+                            <p class="${nameColor} text-sm font-normal ${nameAlignment}">${name}</p>
+                            <p class="text-base font-normal leading-normal rounded-xl px-4 py-3 ${bubbleColor}">
+                                ${messageData.message}
+                            </p>
+                        </div>
+                        ${isUser ? `<img src="${avatarUrl}" alt="${name} Avatar" class="rounded-full size-10 shrink-0">` : ''}
+                    </div>
+                `;
+            };
+
+            /**
+             * Renders all messages from the chat history into the chat container.
+             */
+            const renderMessages = () => {
+                chatContainer.innerHTML = chatHistory.map(createMessageHTML).join('');
+                scrollToBottom();
+            };
+            
+            /**
+             * Shows or hides the typing indicator.
+             * @param {boolean} show - Whether to show the indicator.
+             */
+            const toggleTypingIndicator = (show) => {
+                 if (show) {
+                     typingIndicatorContainer.innerHTML = `
+                         <div class="flex items-end gap-3 justify-start">
+                             <img src="${botAvatar}" alt="Bot Avatar" class="rounded-full size-10 shrink-0">
+                             <div class="flex items-center justify-center rounded-xl px-4 py-3 bg-[#293038]">
+                                 <div class="typing-indicator">
+                                     <span></span><span></span><span></span>
+                                 </div>
+                             </div>
+                         </div>
+                     `;
+                     scrollToBottom();
+                 } else {
+                     typingIndicatorContainer.innerHTML = '';
+                 }
+            }
+
+            /**
+             * Sends the user's message to the webhook and displays the response.
+             * @param {string} messageText - The text of the user's message.
+             */
+            const sendMessageToWebhook = async (messageText) => {
+                toggleTypingIndicator(true);
+
+                try {
+                    // IMPORTANT: For this to work, your webhook server (n8n) MUST
+                    // send back the 'Access-Control-Allow-Origin: *' header in its response.
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: messageText }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Webhook response was not ok: ${response.statusText}`);
+                    }
+
+                    const responseText = await response.text();
+                    
+                    const botReply = responseText || "Received an empty response.";
+
+                    const botMessage = {
+                        sender: 'bot',
+                        message: botReply
+                    };
+                    chatHistory.push(botMessage);
+
+                } catch (error) {
+                    console.error('Error sending message to webhook:', error);
+                    const botMessage = {
+                        sender: 'bot',
+                        message: "Sorry, there was an error."
+                    };
+                    chatHistory.push(botMessage);
+                } finally {
+                    toggleTypingIndicator(false);
+                    renderMessages();
+                }
+            };
+
+
+            // --- Event Listeners ---
+
+            /**
+             * Handles the form submission to send a new message.
+             */
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const userMessageText = messageInput.value.trim();
+
+                if (userMessageText) {
+                    // Add user message to history
+                    const userMessage = {
+                        sender: 'user',
+                        message: userMessageText,
+                    };
+                    chatHistory.push(userMessage);
+                    renderMessages();
+                    
+                    // Clear input and send message to webhook
+                    messageInput.value = '';
+                    sendMessageToWebhook(userMessageText);
+                }
+            });
+
+            // --- Initial Load ---
+            renderMessages();
+        });
+    </script>
+</body>
+</html>
